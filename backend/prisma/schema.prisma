@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Psychologist {
+  id                     String   @id @default(uuid()) @db.Uuid
+  whatsappNumber         String   @unique @map("whatsapp_number") @db.VarChar(20)
+  fullName               String   @map("full_name") @db.VarChar(255)
+  workingHours           Json     @map("working_hours") @db.JsonB
+  sessionDurationMinutes Int      @default(50) @map("session_duration_minutes")
+  timezone               String   @default("America/Sao_Paulo") @db.VarChar(50)
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  patients           Patient[]
+  sessions           Session[]
+  availabilityBlocks AvailabilityBlock[]
+  messageLogs        MessageLog[]
+
+  @@map("psychologists")
+}
+
+model Patient {
+  id             String   @id @default(uuid()) @db.Uuid
+  psychologistId String   @map("psychologist_id") @db.Uuid
+  fullName       String   @map("full_name") @db.VarChar(255)
+  whatsappNumber String?  @map("whatsapp_number") @db.VarChar(20)
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  psychologist Psychologist @relation(fields: [psychologistId], references: [id], onDelete: Cascade)
+  sessions     Session[]
+
+  @@unique([psychologistId, fullName])
+  @@map("patients")
+}
+
+model Session {
+  id                    String   @id @default(uuid()) @db.Uuid
+  psychologistId        String   @map("psychologist_id") @db.Uuid
+  patientId             String   @map("patient_id") @db.Uuid
+  scheduledAt           DateTime @map("scheduled_at")
+  durationMinutes       Int      @map("duration_minutes")
+  status                String   @default("scheduled") @db.VarChar(20)
+  googleCalendarEventId String?  @map("google_calendar_event_id") @db.VarChar(255)
+  isRecurring           Boolean  @default(false) @map("is_recurring")
+  recurringPattern      Json?    @map("recurring_pattern") @db.JsonB
+  notes                 String?
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  psychologist Psychologist @relation(fields: [psychologistId], references: [id], onDelete: Cascade)
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([psychologistId, scheduledAt])
+  @@map("sessions")
+}
+
+model AvailabilityBlock {
+  id             String   @id @default(uuid()) @db.Uuid
+  psychologistId String   @map("psychologist_id") @db.Uuid
+  startTime      DateTime @map("start_time")
+  endTime        DateTime @map("end_time")
+  blockType      String   @map("block_type") @db.VarChar(20)
+  reason         String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  psychologist Psychologist @relation(fields: [psychologistId], references: [id], onDelete: Cascade)
+
+  @@index([psychologistId, startTime, endTime])
+  @@map("availability_blocks")
+}
+
+model MessageLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  psychologistId String?  @map("psychologist_id") @db.Uuid
+  messageType    String?  @map("message_type") @db.VarChar(50)
+  content        String
+  processedAt    DateTime @default(now()) @map("processed_at")
+  metadata       Json?    @db.JsonB
+
+  psychologist Psychologist? @relation(fields: [psychologistId], references: [id])
+
+  @@map("message_logs")
+}

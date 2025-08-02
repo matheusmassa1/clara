@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clara - Simulador WhatsApp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: 1fr;
+            height: 600px;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 20px;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .chat-container {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #25d366;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-header .avatar {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #25d366;
+        }
+
+        .chat-messages {
+            padding: 20px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            background: #e5ddd5;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='m36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            scroll-behavior: smooth;
+            min-height: 0;
+            height: 100%;
+        }
+
+        /* Custom scrollbar for better UX */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.4);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.6);
+        }
+
+        /* Force scrollbar to always be visible for debugging */
+        .chat-messages {
+            scrollbar-width: auto;
+            scrollbar-color: rgba(0,0,0,0.4) rgba(0,0,0,0.1);
+        }
+
+        .scroll-to-bottom {
+            position: absolute;
+            bottom: 80px;
+            right: 20px;
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .scroll-to-bottom:hover {
+            background: #20b856;
+            transform: scale(1.1);
+        }
+
+        .message {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .message.outgoing {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        .message.incoming .message-bubble {
+            background: white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message.outgoing .message-bubble {
+            background: #dcf8c6;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .chat-input {
+            background: white;
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .chat-input button {
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .chat-input button:hover {
+            background: #20b856;
+        }
+
+        .chat-input button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .setup-form {
+            margin-bottom: 20px;
+        }
+
+        .setup-form input, .setup-form select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .setup-form button {
+            width: 100%;
+            padding: 10px;
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .setup-form button:hover {
+            background: #20b856;
+        }
+
+        .suggestions {
+            margin-top: 20px;
+        }
+
+        .suggestion-category {
+            margin-bottom: 15px;
+        }
+
+        .suggestion-category h4 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .suggestion-item {
+            background: #f0f0f0;
+            padding: 8px 10px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: #25d366;
+            color: white;
+        }
+
+        .status {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .session-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            max-width: 60px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 2px;
+        }
+
+        .typing-dots span {
+            width: 4px;
+            height: 4px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: scale(1); opacity: 0.3; }
+            30% { transform: scale(1.2); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <h3>🤖 Configuração</h3>
+            
+            <div id="status" class="status disconnected">
+                Desconectado
+            </div>
+
+            <div class="setup-form">
+                <input type="text" id="psychologistName" placeholder="Nome do Psicólogo" value="Dr. Maria Silva">
+                <input type="text" id="whatsappNumber" placeholder="WhatsApp (+5511999999999)" value="+5511999999999">
+                <button type="button" onclick="startSimulation()">Iniciar Simulação</button>
+            </div>
+
+            <div id="sessionInfo" class="session-info" style="display: none;">
+                <strong>Sessão Ativa</strong><br>
+                ID: <span id="sessionId"></span><br>
+                Mensagens: <span id="messageCount">0</span>
+            </div>
+
+            <button type="button" onclick="clearSession()" style="width: 100%; padding: 8px; background: #dc3545; color: white; border: none; border-radius: 4px; margin-bottom: 10px; display: none;" id="clearBtn">
+                Limpar Conversa
+            </button>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="chat-container" style="position: relative;">
+            <div class="chat-header">
+                <div class="avatar">C</div>
+                <div>
+                    <div style="font-weight: bold;">Clara</div>
+                    <div style="font-size: 12px; opacity: 0.8;">Assistente de Agendamento</div>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message incoming">
+                    <div class="message-bubble">
+                        👋 Olá! Sou a Clara, sua assistente de agendamento.<br><br>
+                        Configure seus dados na barra lateral e clique em "Iniciar Simulação" para começar!
+                        <div class="message-time">Sistema</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <button type="button" class="scroll-to-bottom" id="scrollToBottom" onclick="scrollToBottom()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 14l5 5 5-5z"/>
+                </svg>
+            </button>
+
+            <div class="chat-input">
+                <input type="text" id="messageInput" placeholder="Digite sua mensagem..." disabled>
+                <button type="button" onclick="sendMessage()" disabled id="sendBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="sidebar suggestions">
+            <h3>💡 Comandos Sugeridos</h3>
+            
+            <div class="suggestion-category">
+                <h4>📅 Agendamento</h4>
+                <div class="suggestion-item" onclick="sendSuggestion('Agendar Ana quinta 14h')">Agendar Ana quinta 14h</div>
+                <div class="suggestion-item" onclick="sendSuggestion('Marcar João segunda 10:30')">Marcar João segunda 10:30</div>
+                <div class="suggestion-item" onclick="sendSuggestion('Agendar Maria amanhã 15h')">Agendar Maria amanhã 15h</div>
+            </div>
+
+            <div class="suggestion-category">
+                <h4>❌ Cancelamento</h4>
+                <div class="suggestion-item" onclick="sendSuggestion('Cancelar Ana quinta')">Cancelar Ana quinta</div>
+                <div class="suggestion-item" onclick="sendSuggestion('Desmarcar João segunda')">Desmarcar João segunda</div>
+            </div>
+
+            <div class="suggestion-category">
+                <h4>📋 Visualização</h4>
+                <div class="suggestion-item" onclick="sendSuggestion('Mostrar semana')">Mostrar semana</div>
+                <div class="suggestion-item" onclick="sendSuggestion('Ver agenda hoje')">Ver agenda hoje</div>
+                <div class="suggestion-item" onclick="sendSuggestion('Minha agenda')">Minha agenda</div>
+            </div>
+
+            <div class="suggestion-category">
+                <h4>🆘 Ajuda</h4>
+                <div class="suggestion-item" onclick="sendSuggestion('Ajuda')">Ajuda</div>
+                <div class="suggestion-item" onclick="sendSuggestion('Comandos')">Comandos</div>
+            </div>
+
+            <div class="suggestion-category">
+                <h4>🧪 Teste Edge Cases</h4>
+                <div class="suggestion-item" onclick="sendSuggestion('Agendar Pedro quinta 14h')">Conflito (Pedro vs Ana)</div>
+                <div class="suggestion-item" onclick="sendSuggestion('Agendar Teste domingo 10h')">Fora do horário</div>
+                <div class="suggestion-item" onclick="sendSuggestion('Cancelar Inexistente hoje')">Paciente inexistente</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSessionId = null;
+        let currentWhatsApp = null;
+        let messageCount = 0;
+
+        console.log('Clara Simulator loading...');
+
+        // Auto-focus message input
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function startSimulation() {
+            console.log('Starting simulation...');
+            
+            const name = document.getElementById('psychologistName').value;
+            const whatsapp = document.getElementById('whatsappNumber').value;
+
+            if (!name || !whatsapp) {
+                alert('Por favor, preencha nome e WhatsApp');
+                return;
+            }
+
+            try {
+                console.log('Sending request to create session...');
+                
+                const response = await fetch('/simulator/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        psychologistName: name,
+                        psychologistWhatsApp: whatsapp
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    currentSessionId = data.sessionId;
+                    currentWhatsApp = whatsapp;
+                    
+                    document.getElementById('status').className = 'status connected';
+                    document.getElementById('status').textContent = 'Conectado';
+                    
+                    document.getElementById('sessionInfo').style.display = 'block';
+                    document.getElementById('sessionId').textContent = data.sessionId.substr(-8);
+                    
+                    document.getElementById('messageInput').disabled = false;
+                    document.getElementById('sendBtn').disabled = false;
+                    document.getElementById('clearBtn').style.display = 'block';
+                    
+                    addMessage('clara', `Olá ${name}! Simulação iniciada. Como posso ajudar?`);
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error starting simulation:', error);
+                alert('Erro de conexão: ' + error.message);
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || !currentSessionId) return;
+
+            console.log('Sending message:', message);
+
+            // Show user message
+            addMessage('psychologist', message);
+            input.value = '';
+
+            // Show typing indicator
+            showTyping();
+
+            try {
+                const response = await fetch(`/simulator/sessions/${currentSessionId}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        psychologistWhatsApp: currentWhatsApp
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Message response:', data);
+                
+                hideTyping();
+                
+                if (response.ok) {
+                    addMessage('clara', data.claraMessage.content);
+                    updateMessageCount();
+                } else {
+                    addMessage('clara', 'Erro: ' + data.error);
+                }
+            } catch (error) {
+                hideTyping();
+                console.error('Error sending message:', error);
+                addMessage('clara', 'Erro de conexão: ' + error.message);
+            }
+        }
+
+        function sendSuggestion(text) {
+            if (!currentSessionId) {
+                alert('Inicie uma simulação primeiro');
+                return;
+            }
+            
+            document.getElementById('messageInput').value = text;
+            sendMessage();
+        }
+
+        function addMessage(sender, content) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            
+            const isIncoming = sender === 'clara';
+            messageDiv.className = `message ${isIncoming ? 'incoming' : 'outgoing'}`;
+            
+            const time = new Date().toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            messageDiv.innerHTML = `
+                <div class="message-bubble">
+                    ${content.replace(/\n/g, '<br>')}
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            // Add with animation
+            messageDiv.style.opacity = '0';
+            messageDiv.style.transform = 'translateY(20px)';
+            messagesContainer.appendChild(messageDiv);
+            
+            // Animate in
+            setTimeout(() => {
+                messageDiv.style.transition = 'all 0.3s ease';
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateY(0)';
+            }, 50);
+            
+            // Smooth scroll to bottom
+            setTimeout(() => {
+                messagesContainer.scrollTo({
+                    top: messagesContainer.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+
+        function showTyping() {
+            document.getElementById('typingIndicator').style.display = 'block';
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        function hideTyping() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        }
+
+        function updateMessageCount() {
+            messageCount += 2; // User + Clara
+            document.getElementById('messageCount').textContent = messageCount;
+        }
+
+        async function clearSession() {
+            if (!currentSessionId) return;
+
+            try {
+                await fetch(`/simulator/sessions/${currentSessionId}`, {
+                    method: 'DELETE'
+                });
+
+                // Reset UI
+                document.getElementById('chatMessages').innerHTML = `
+                    <div class="message incoming">
+                        <div class="message-bubble">
+                            👋 Conversa limpa. Como posso ajudar?
+                            <div class="message-time">Sistema</div>
+                        </div>
+                    </div>
+                `;
+                
+                messageCount = 0;
+                updateMessageCount();
+                
+            } catch (error) {
+                console.error('Error clearing session:', error);
+            }
+        }
+
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        function checkScrollPosition() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const scrollToBottomBtn = document.getElementById('scrollToBottom');
+            
+            const isAtBottom = messagesContainer.scrollTop >= messagesContainer.scrollHeight - messagesContainer.clientHeight - 50;
+            
+            if (isAtBottom) {
+                scrollToBottomBtn.style.display = 'none';
+            } else {
+                scrollToBottomBtn.style.display = 'flex';
+            }
+        }
+
+        function debugScroll() {
+            const messagesContainer = document.getElementById('chatMessages');
+            console.log('=== SCROLL DEBUG INFO ===');
+            console.log('Container height:', messagesContainer.clientHeight);
+            console.log('Scroll height:', messagesContainer.scrollHeight);
+            console.log('Scroll top:', messagesContainer.scrollTop);
+            console.log('Can scroll:', messagesContainer.scrollHeight > messagesContainer.clientHeight);
+            console.log('Overflow Y:', window.getComputedStyle(messagesContainer).overflowY);
+            console.log('=========================');
+        }
+
+        function addTestMessages() {
+            for (let i = 1; i <= 20; i++) {
+                addMessage('clara', `Esta é uma mensagem de teste número ${i}. Ela deveria permitir que você teste o scroll da interface. Se você conseguir rolar para ver esta mensagem, o scroll está funcionando!`);
+            }
+        }
+
+        // Initialize page
+        window.addEventListener('load', () => {
+            console.log('Clara Simulator loaded successfully!');
+            
+            // Add scroll event listener for scroll-to-bottom button
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.addEventListener('scroll', checkScrollPosition);
+            
+            // Add debug functions to window for testing
+            window.debugScroll = debugScroll;
+            window.addTestMessages = addTestMessages;
+            
+            console.log('💡 Para debug, digite no console:');
+            console.log('debugScroll() - mostra info do scroll');
+            console.log('addTestMessages() - adiciona mensagens de teste');
+        });
+    </script>
+</body>
+</html>
