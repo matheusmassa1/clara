@@ -11,6 +11,7 @@ model Psychologist {
   id                     String   @id @default(uuid()) @db.Uuid
   whatsappNumber         String   @unique @map("whatsapp_number") @db.VarChar(20)
   fullName               String   @map("full_name") @db.VarChar(255)
+  googleCalendarId       String?  @map("google_calendar_id") @db.VarChar(255)
   workingHours           Json     @map("working_hours") @db.JsonB
   sessionDurationMinutes Int      @default(50) @map("session_duration_minutes")
   timezone               String   @default("America/Sao_Paulo") @db.VarChar(50)

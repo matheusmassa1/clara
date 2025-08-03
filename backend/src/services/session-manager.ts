@@ -1,6 +1,7 @@
 // src/services/session-manager.ts
 import Redis from 'ioredis';
 import { ConversationContext, ConversationStep } from '../types';
+import { logger } from '../utils/logger';
 
 export class SessionManager {
   private redis: Redis;
@@ -10,7 +11,7 @@ export class SessionManager {
     this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
     
     this.redis.on('error', (error) => {
-      console.error('Redis connection error:', error);
+      logger.error('Redis connection error', { error: error.message });
     });
   }
 
@@ -32,7 +33,10 @@ export class SessionManager {
 
       return context;
     } catch (error) {
-      console.error('Error getting conversation context:', error);
+      logger.error('Error getting conversation context', { 
+        error: error instanceof Error ? error.message : error,
+        whatsappNumber 
+      });
       return null;
     }
   }
@@ -47,7 +51,10 @@ export class SessionManager {
         contextStr
       );
     } catch (error) {
-      console.error('Error setting conversation context:', error);
+      logger.error('Error setting conversation context', { 
+        error: error instanceof Error ? error.message : error,
+        whatsappNumber 
+      });
       throw error;
     }
   }
@@ -75,7 +82,10 @@ export class SessionManager {
       await this.setContext(whatsappNumber, updatedContext);
       return updatedContext;
     } catch (error) {
-      console.error('Error updating conversation context:', error);
+      logger.error('Error updating conversation context', { 
+        error: error instanceof Error ? error.message : error,
+        whatsappNumber 
+      });
       throw error;
     }
   }
@@ -84,7 +94,10 @@ export class SessionManager {
     try {
       await this.redis.del(`conversation:${whatsappNumber}`);
     } catch (error) {
-      console.error('Error clearing conversation context:', error);
+      logger.error('Error clearing conversation context', { 
+        error: error instanceof Error ? error.message : error,
+        whatsappNumber 
+      });
       throw error;
     }
   }
@@ -138,7 +151,9 @@ export class SessionManager {
       const keys = await this.redis.keys('conversation:*');
       return keys.map(key => key.replace('conversation:', ''));
     } catch (error) {
-      console.error('Error getting active contexts:', error);
+      logger.error('Error getting active contexts', { 
+        error: error instanceof Error ? error.message : error 
+      });
       return [];
     }
   }
@@ -147,7 +162,10 @@ export class SessionManager {
     try {
       await this.redis.expire(`conversation:${whatsappNumber}`, additionalSeconds);
     } catch (error) {
-      console.error('Error extending context expiry:', error);
+      logger.error('Error extending context expiry', { 
+        error: error instanceof Error ? error.message : error,
+        whatsappNumber 
+      });
     }
   }
 
@@ -168,7 +186,9 @@ export class SessionManager {
 
       return { activeContexts, expiredContexts };
     } catch (error) {
-      console.error('Error getting context stats:', error);
+      logger.error('Error getting context stats', { 
+        error: error instanceof Error ? error.message : error 
+      });
       return { activeContexts: 0, expiredContexts: 0 };
     }
   }
@@ -184,7 +204,9 @@ export class SessionManager {
         }
       }
     } catch (error) {
-      console.error('Error cleaning up expired contexts:', error);
+      logger.error('Error cleaning up expired contexts', { 
+        error: error instanceof Error ? error.message : error 
+      });
     }
   }
 

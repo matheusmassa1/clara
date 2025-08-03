@@ -1,8 +1,9 @@
 // src/routes/simulator.ts
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { MessageProcessor } from '../services/message-processor';
 import { PrismaClient } from '@prisma/client';
 import { SimulationMessage } from '../types';
+import path from 'path';
 
 const router = Router();
 const messageProcessor = new MessageProcessor();
@@ -325,6 +326,11 @@ router.get('/test-commands', (req, res) => {
   ];
 
   return res.json({ commands });
+});
+
+// WhatsApp Dashboard route
+router.get('/whatsapp-dashboard', (req: Request, res: Response) => {
+  return res.sendFile(path.join(__dirname, '../views/whatsapp-dashboard.html'));
 });
 
 export { router as simulatorRouter };

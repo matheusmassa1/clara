@@ -9,6 +9,9 @@ import dotenv from 'dotenv';
 import { webhookRouter } from './routes/webhook';
 import { healthRouter } from './routes/health';
 import { simulatorRouter } from './routes/simulator';
+import whatsappRoutes from './routes/whatsapp';
+import databaseRoutes from './routes/database';
+import { whatsappService } from './services/whatsapp-service';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import path from 'path';
@@ -62,11 +65,18 @@ app.get('/', (req, res) => {
 
 app.use('/webhook', webhookRouter);
 app.use('/health', healthRouter);
+app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/db', databaseRoutes);
 app.use('/simulator', simulatorRouter);
 
 // Serve simulator HTML page
 app.get('/simulator-ui', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'simulator.html'));
+});
+
+// Serve Clara Dashboard
+app.get('/clara-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'clara-dashboard.html'));
 });
 
 
@@ -82,8 +92,31 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 if (require.main === module) {
-    app.listen(PORT, () => {
+    app.listen(PORT, async () => {
         logger.info(`Clara Backend running on port ${PORT}`);
+        
+        // Initialize WhatsApp service
+        try {
+            logger.info('Initializing WhatsApp service');
+            
+            // Register your number automatically
+            whatsappService.registerPsychologist({
+                psychologistId: 'psych-matheus',
+                whatsappNumber: '5562982337961', // Registered with 9 (Brazilian mobile pattern)
+                fullName: 'Dr. Matheus (Test)',
+                isActive: true
+            });
+            
+            await whatsappService.start();
+            logger.info('WhatsApp service started successfully');
+            console.log('✅ WhatsApp service started successfully!');
+            console.log('📱 Check the terminal for QR code or visit: http://localhost:3000/simulator/whatsapp-dashboard');
+        } catch (error) {
+            logger.error('Failed to start WhatsApp service', { 
+                error: error instanceof Error ? error.message : error 
+            });
+            console.log('💡 You can start it manually via the dashboard at: http://localhost:3000/simulator/whatsapp-dashboard');
+        }
     });
 }
 

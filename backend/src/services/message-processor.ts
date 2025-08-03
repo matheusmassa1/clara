@@ -5,6 +5,7 @@ import { SessionManager } from './session-manager';
 import { ValidationLayer } from './validation-layer';
 import { ResponseGenerator } from './response-generator';
 import { ParsedCommand, ConversationStep, ProcessingResult } from '../types';
+import { logger } from '../utils/logger';
 
 export class MessageProcessor {
   private prisma: PrismaClient;
@@ -26,6 +27,8 @@ export class MessageProcessor {
     message: string
   ): Promise<ProcessingResult> {
     try {
+      logger.info('Processing message', { whatsappNumber, messagePreview: message.substring(0, 50) });
+      
       // Log da mensagem recebida
       await this.logMessage(whatsappNumber, 'incoming', message);
 
@@ -39,10 +42,15 @@ export class MessageProcessor {
         if (!psychologist) {
           const response = this.responseGenerator.generateWelcomeMessage();
           await this.logMessage(whatsappNumber, 'response', response);
+          logger.warn('Message from unregistered psychologist', { whatsappNumber });
           return { success: true, response };
         }
 
         context = await this.sessionManager.createContext(whatsappNumber, psychologist.id);
+        logger.info('Created new conversation context', { 
+          whatsappNumber, 
+          psychologistId: psychologist.id 
+        });
       }
 
       // Processar mensagem baseado no estado da conversa
@@ -54,7 +62,11 @@ export class MessageProcessor {
       return result;
 
     } catch (error) {
-      console.error('Error processing message:', error);
+      logger.error('Error processing message', { 
+        error: error instanceof Error ? error.message : error,
+        whatsappNumber 
+      });
+      
       const errorResponse = this.responseGenerator.generateErrorMessage(
         'Ocorreu um erro interno. Tente novamente em alguns instantes.'
       );
@@ -356,7 +368,11 @@ export class MessageProcessor {
       };
 
     } catch (error) {
-      console.error('Error creating patient:', error);
+      logger.error('Error creating patient', { 
+        error: error instanceof Error ? error.message : error,
+        whatsappNumber,
+        patientName: context.data.patientName 
+      });
       return {
         success: false,
         response: this.responseGenerator.generateErrorMessage('Erro ao criar paciente.'),
@@ -417,7 +433,11 @@ export class MessageProcessor {
       };
 
     } catch (error) {
-      console.error('Error executing schedule command:', error);
+      logger.error('Error executing schedule command', { 
+        error: error instanceof Error ? error.message : error,
+        whatsappNumber,
+        psychologistId: context.psychologistId 
+      });
       return {
         success: false,
         response: this.responseGenerator.generateErrorMessage('Erro ao agendar sessão.'),
@@ -454,7 +474,11 @@ export class MessageProcessor {
       };
 
     } catch (error) {
-      console.error('Error executing cancel command:', error);
+      logger.error('Error executing cancel command', { 
+        error: error instanceof Error ? error.message : error,
+        whatsappNumber,
+        sessionId: context.data.sessionId 
+      });
       return {
         success: false,
         response: this.responseGenerator.generateErrorMessage('Erro ao cancelar sessão.'),
@@ -492,7 +516,11 @@ export class MessageProcessor {
         }
       });
     } catch (error) {
-      console.error('Error logging message:', error);
+      logger.error('Error logging message', { 
+        error: error instanceof Error ? error.message : error,
+        psychologistIdOrNumber,
+        messageType 
+      });
     }
   }
 

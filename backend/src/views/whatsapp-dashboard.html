@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clara - WhatsApp Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .dashboard {
+            padding: 30px;
+        }
+
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #25D366;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-connected { background: #25D366; }
+        .status-disconnected { background: #dc3545; }
+        .status-connecting { background: #ffc107; }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .control-group h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #25D366;
+        }
+
+        .psychologists-list {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .psychologist-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .psychologist-info {
+            flex: 1;
+        }
+
+        .psychologist-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .psychologist-phone {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .psychologist-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .logs {
+            background: #1a1a1a;
+            color: #00ff00;
+            border-radius: 15px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .timestamp {
+            color: #888;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #25D366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Clara WhatsApp Dashboard</h1>
+            <p>Gerenciamento de Integração WhatsApp</p>
+        </div>
+
+        <div class="dashboard">
+            <!-- Status Card -->
+            <div class="status-card">
+                <h3>📊 Status do Serviço</h3>
+                <div id="service-status">
+                    <span class="status-indicator status-disconnected"></span>
+                    <span>Carregando...</span>
+                </div>
+                <div id="service-details" style="margin-top: 15px; color: #666;"></div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <!-- Service Control -->
+                <div class="control-group">
+                    <h3>🎛️ Controle do Serviço</h3>
+                    <button class="btn" onclick="startService()">▶️ Iniciar</button>
+                    <button class="btn btn-warning" onclick="restartService()">🔄 Reiniciar</button>
+                    <button class="btn btn-danger" onclick="stopService()">⏹️ Parar</button>
+                </div>
+
+                <!-- Send Message -->
+                <div class="control-group">
+                    <h3>💬 Enviar Mensagem</h3>
+                    <div class="input-group">
+                        <label>Número (com DDD):</label>
+                        <input type="text" id="send-to" placeholder="5511999999999">
+                    </div>
+                    <div class="input-group">
+                        <label>Mensagem:</label>
+                        <textarea id="send-message" rows="3" placeholder="Digite sua mensagem..."></textarea>
+                    </div>
+                    <button class="btn" onclick="sendMessage()">📤 Enviar</button>
+                </div>
+
+                <!-- Register Psychologist -->
+                <div class="control-group">
+                    <h3>👩‍⚕️ Cadastrar Psicólogo</h3>
+                    <div class="input-group">
+                        <label>Nome Completo:</label>
+                        <input type="text" id="psych-name" placeholder="Dra. Ana Silva">
+                    </div>
+                    <div class="input-group">
+                        <label>WhatsApp (com DDD):</label>
+                        <input type="text" id="psych-phone" placeholder="5511999999999">
+                    </div>
+                    <button class="btn" onclick="registerPsychologist()">➕ Cadastrar</button>
+                </div>
+
+                <!-- Broadcast -->
+                <div class="control-group">
+                    <h3>📢 Broadcast</h3>
+                    <div class="input-group">
+                        <label>Mensagem para todos:</label>
+                        <textarea id="broadcast-message" rows="3" placeholder="Mensagem para todos os psicólogos..."></textarea>
+                    </div>
+                    <button class="btn btn-warning" onclick="broadcastMessage()">📢 Enviar para Todos</button>
+                </div>
+            </div>
+
+            <!-- Psychologists List -->
+            <div class="psychologists-list">
+                <h3>👥 Psicólogos Cadastrados</h3>
+                <div id="psychologists-container">
+                    <p style="color: #666;">Carregando...</p>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div id="alerts-container"></div>
+
+            <!-- Logs -->
+            <div class="logs" id="logs">
+                <div class="log-entry">
+                    <span class="timestamp">[${new Date().toLocaleTimeString()}]</span>
+                    Dashboard iniciado - aguardando dados...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let updateInterval;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus();
+            updatePsychologists();
+            
+            // Auto-refresh every 5 seconds
+            updateInterval = setInterval(() => {
+                updateStatus();
+                updatePsychologists();
+            }, 5000);
+        });
+
+        function addLog(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alerts-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                container.removeChild(alert);
+            }, 5000);
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/whatsapp/status');
+                const data = await response.json();
+
+                if (data.success) {
+                    const status = data.data;
+                    const statusElement = document.getElementById('service-status');
+                    const detailsElement = document.getElementById('service-details');
+
+                    let statusClass = 'status-disconnected';
+                    let statusText = 'Desconectado';
+
+                    if (status.isConnected) {
+                        statusClass = 'status-connected';
+                        statusText = 'Conectado';
+                    } else if (status.session.connectionState === 'connecting') {
+                        statusClass = 'status-connecting';
+                        statusText = 'Conectando';
+                    }
+
+                    statusElement.innerHTML = `
+                        <span class="status-indicator ${statusClass}"></span>
+                        <span>${statusText}</span>
+                    `;
+
+                    const uptime = Math.floor(status.uptime / 1000);
+                    detailsElement.innerHTML = `
+                        <strong>Tempo Online:</strong> ${uptime}s |
+                        <strong>Psicólogos:</strong> ${status.registeredPsychologists} |
+                        <strong>Fila:</strong> ${status.queueStats.total} mensagens
+                    `;
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao atualizar status: ${error.message}`);
+            }
+        }
+
+        async function updatePsychologists() {
+            try {
+                const response = await fetch('/api/whatsapp/psychologists');
+                const data = await response.json();
+
+                if (data.success) {
+                    const container = document.getElementById('psychologists-container');
+                    
+                    if (data.data.length === 0) {
+                        container.innerHTML = '<p style="color: #666;">Nenhum psicólogo cadastrado</p>';
+                        return;
+                    }
+
+                    container.innerHTML = data.data.map(psych => `
+                        <div class="psychologist-item">
+                            <div class="psychologist-info">
+                                <div class="psychologist-name">${psych.fullName}</div>
+                                <div class="psychologist-phone">${psych.whatsappNumber}</div>
+                            </div>
+                            <div class="psychologist-status ${psych.isActive ? 'status-active' : 'status-inactive'}">
+                                ${psych.isActive ? 'Ativo' : 'Inativo'}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao carregar psicólogos: ${error.message}`);
+            }
+        }
+
+        async function startService() {
+            try {
+                addLog('🚀 Iniciando serviço WhatsApp...');
+                const response = await fetch('/api/whatsapp/start', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('✅ Serviço iniciado com sucesso!');
+                    addLog('✅ Serviço WhatsApp iniciado');
+                } else {
+                    throw new Error(data.message || 'Erro desconhecido');
+                }
+            } catch (error) {
+                showAlert(`❌ Erro ao iniciar serviço: ${error.message}`, 'error');
+                addLog(`❌ Erro ao iniciar: ${error.message}`);
+            }
+        }
+
+        async function stopService() {
+            try {
+                addLog('🛑 Parando serviço WhatsApp...');
+                const response = await fetch('/api/whatsapp/stop', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('✅ Serviço parado com sucesso!');
+                    addLog('✅ Serviço WhatsApp parado');
+                } else {
+                    throw new Error(data.message || 'Erro desconhecido');
+                }
+            } catch (error) {
+                showAlert(`❌ Erro ao parar serviço: ${error.message}`, 'error');
+                addLog(`❌ Erro ao parar: ${error.message}`);
+            }
+        }
+
+        async function restartService() {
+            try {
+                addLog('🔄 Reiniciando serviço WhatsApp...');
+                const response = await fetch('/api/whatsapp/restart', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('✅ Serviço reiniciado com sucesso!');
+                    addLog('✅ Serviço WhatsApp reiniciado');
+                } else {
+                    throw new Error(data.message || 'Erro desconhecido');
+                }
+            } catch (error) {
+                showAlert(`❌ Erro ao reiniciar serviço: ${error.message}`, 'error');
+                addLog(`❌ Erro ao reiniciar: ${error.message}`);
+            }
+        }
+
+        async function sendMessage() {
+            const to = document.getElementById('send-to').value;
+            const message = document.getElementById('send-message').value;
+
+            if (!to || !message) {
+                showAlert('❌ Preencha todos os campos', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/whatsapp/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to, message })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('✅ Mensagem enviada com sucesso!');
+                    addLog(`📤 Mensagem enviada para ${to}`);
+                    document.getElementById('send-message').value = '';
+                } else {
+                    throw new Error(data.message || 'Erro desconhecido');
+                }
+            } catch (error) {
+                showAlert(`❌ Erro ao enviar mensagem: ${error.message}`, 'error');
+                addLog(`❌ Erro ao enviar para ${to}: ${error.message}`);
+            }
+        }
+
+        async function registerPsychologist() {
+            const fullName = document.getElementById('psych-name').value;
+            const whatsappNumber = document.getElementById('psych-phone').value;
+
+            if (!fullName || !whatsappNumber) {
+                showAlert('❌ Preencha todos os campos', 'error');
+                return;
+            }
+
+            try {
+                const psychologistId = `psych-${Date.now()}`;
+                const response = await fetch('/api/whatsapp/psychologists', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ psychologistId, whatsappNumber, fullName })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('✅ Psicólogo cadastrado com sucesso!');
+                    addLog(`👩‍⚕️ Psicólogo ${fullName} cadastrado`);
+                    document.getElementById('psych-name').value = '';
+                    document.getElementById('psych-phone').value = '';
+                    updatePsychologists();
+                } else {
+                    throw new Error(data.message || 'Erro desconhecido');
+                }
+            } catch (error) {
+                showAlert(`❌ Erro ao cadastrar psicólogo: ${error.message}`, 'error');
+                addLog(`❌ Erro ao cadastrar ${fullName}: ${error.message}`);
+            }
+        }
+
+        async function broadcastMessage() {
+            const message = document.getElementById('broadcast-message').value;
+
+            if (!message) {
+                showAlert('❌ Digite uma mensagem para enviar', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/whatsapp/broadcast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('✅ Broadcast enviado com sucesso!');
+                    addLog(`📢 Broadcast enviado para todos os psicólogos`);
+                    document.getElementById('broadcast-message').value = '';
+                } else {
+                    throw new Error(data.message || 'Erro desconhecido');
+                }
+            } catch (error) {
+                showAlert(`❌ Erro ao enviar broadcast: ${error.message}`, 'error');
+                addLog(`❌ Erro no broadcast: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
