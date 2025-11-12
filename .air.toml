@@ -1,0 +1,9 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/clara cmd/clara/main.go"
+  bin = "./tmp/clara"
+  exclude_dir = ["tmp", "vendor", "whatsapp_session", ".git"]
+  include_ext = ["go"]
+  delay = 1000

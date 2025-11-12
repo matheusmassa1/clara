@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# WhatsApp session
+whatsapp_session/
+tmp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docs
+*.md
+!README.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+
+# Test coverage
+*.out
+coverage.html
+
+# Vendor
+vendor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

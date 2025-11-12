@@ -1,5 +1,6 @@
 # Binaries
 /clara
+/bin
 *.exe
 *.exe~
 *.dll
@@ -39,3 +40,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Docker
+docker-compose.override.yml
+build-errors.log
