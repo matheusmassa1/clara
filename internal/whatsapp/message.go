@@ -1,8 +1,6 @@
 package whatsapp
 
 import (
-	"fmt"
-
 	"go.mau.fi/whatsmeow/types/events"
 )
 
@@ -10,12 +8,20 @@ import (
 // Filters: 1-on-1 only (ignores groups).
 // Echo handler: replies with "Echo: {text}".
 func (c *Client) handleMessage(evt *events.Message) {
-	// Ignore if not a message from a chat
-	if evt.Info.Chat.Server != "s.whatsapp.net" {
-		// Group messages have different server (g.us)
-		c.logger.Debug().
+	// Ignore group messages (only process 1-on-1 chats)
+	// s.whatsapp.net = regular 1-on-1
+	// lid = WhatsApp Business 1-on-1
+	// g.us = groups (ignore)
+	if evt.Info.Chat.Server != "s.whatsapp.net" && evt.Info.Chat.Server != "lid" {
+		c.logger.Info().
 			Str("server", string(evt.Info.Chat.Server)).
 			Msg("ignoring non-1-on-1 message")
+		return
+	}
+
+	// Ignore user's own outgoing messages
+	if evt.Info.IsFromMe {
+		c.logger.Info().Msg("ignoring own message")
 		return
 	}
 
@@ -30,7 +36,7 @@ func (c *Client) handleMessage(evt *events.Message) {
 
 	// Ignore empty messages
 	if text == "" {
-		c.logger.Debug().Msg("ignoring empty message")
+		c.logger.Info().Msg("ignoring empty message")
 		return
 	}
 
@@ -39,8 +45,8 @@ func (c *Client) handleMessage(evt *events.Message) {
 		Str("text", text).
 		Msg("received message")
 
-	// Echo handler: reply with "Echo: {text}"
-	reply := fmt.Sprintf("Echo: %s", text)
+	// Echo handler: reply with "Clara: Testing"
+	reply := "Clara: Testing"
 
 	if err := c.SendText(evt.Info.Sender, reply); err != nil {
 		c.logger.Error().
