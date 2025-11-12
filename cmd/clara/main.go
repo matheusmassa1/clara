@@ -8,6 +8,7 @@ import (
 
 	"github.com/matheusmassa1/clara/internal/config"
 	"github.com/matheusmassa1/clara/internal/repository/mongo"
+	"github.com/matheusmassa1/clara/internal/whatsapp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -59,11 +60,23 @@ func main() {
 	// Create repository instances
 	patientRepo := mongo.NewPatientRepository(db)
 	appointmentRepo := mongo.NewAppointmentRepository(db)
+	_ = patientRepo      // prevent unused variable error (future phases)
+	_ = appointmentRepo  // prevent unused variable error (future phases)
+
+	// Initialize WhatsApp client
+	waClient, err := whatsapp.New(cfg, log.Logger)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to create WhatsApp client")
+	}
+	defer waClient.Disconnect()
+
+	// Connect to WhatsApp (displays QR if needed)
+	if err := waClient.Connect(); err != nil {
+		log.Fatal().Err(err).Msg("Failed to connect to WhatsApp")
+	}
 
 	// Log successful initialization
-	log.Info().Msg("Clara initialized successfully")
-	_ = patientRepo      // prevent unused variable error
-	_ = appointmentRepo  // prevent unused variable error
+	log.Info().Msg("Clara initialized successfully - ready to receive messages")
 
 	// Wait for termination signal
 	sigCh := make(chan os.Signal, 1)
