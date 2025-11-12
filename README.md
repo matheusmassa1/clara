@@ -17,7 +17,7 @@ That's it! The command will:
 
 - Go 1.21+
 - Docker & Docker Compose
-- Air (hot reload): `go install github.com/cosmtrek/air@latest`
+- Air (hot reload): `go install github.com/air-verse/air@latest`
 
 ## Development
 
