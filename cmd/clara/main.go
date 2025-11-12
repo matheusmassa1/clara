@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "github.com/mattn/go-sqlite3" // SQLite driver for whatsmeow session storage
+
 	"github.com/matheusmassa1/clara/internal/config"
 	"github.com/matheusmassa1/clara/internal/repository/mongo"
 	"github.com/matheusmassa1/clara/internal/whatsapp"

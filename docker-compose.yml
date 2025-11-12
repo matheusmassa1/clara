@@ -1,0 +1,76 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clara-app
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - SESSION_DIR=/app/whatsapp_session
+    volumes:
+      - ./:/app/src:ro
+      - whatsapp_session:/app/whatsapp_session
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - clara-network
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: clara-app-dev
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - SESSION_DIR=/app/whatsapp_session
+    volumes:
+      - ./:/app/src
+      - whatsapp_session:/app/whatsapp_session
+      - go-build-cache:/go/pkg/mod
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - clara-network
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    profiles:
+      - dev
+
+  mongodb:
+    image: mongo:7
+    container_name: clara-mongodb
+    environment:
+      - MONGO_INITDB_DATABASE=clara
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - clara-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+networks:
+  clara-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
+  whatsapp_session:
+    driver: local
+  go-build-cache:
+    driver: local
