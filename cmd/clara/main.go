@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/matheusmassa1/clara/internal/config"
+	"github.com/matheusmassa1/clara/internal/repository/mongo"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -35,5 +39,36 @@ func main() {
 		Str("session_dir", cfg.SessionDir).
 		Msg("Configuration loaded successfully")
 
-	log.Info().Msg("Clara initialized successfully. Exiting for now...")
+	// Connect to MongoDB
+	ctx := context.Background()
+	client, db, err := mongo.Connect(ctx, cfg.MongoURI, cfg.DBName)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to connect to MongoDB")
+	}
+	defer func() {
+		if err := mongo.Disconnect(context.Background(), client); err != nil {
+			log.Error().Err(err).Msg("Failed to disconnect from MongoDB")
+		}
+	}()
+
+	// Ensure indexes exist
+	if err := mongo.EnsureIndexes(ctx, db); err != nil {
+		log.Fatal().Err(err).Msg("Failed to ensure MongoDB indexes")
+	}
+
+	// Create repository instances
+	patientRepo := mongo.NewPatientRepository(db)
+	appointmentRepo := mongo.NewAppointmentRepository(db)
+
+	// Log successful initialization
+	log.Info().Msg("Clara initialized successfully")
+	_ = patientRepo      // prevent unused variable error
+	_ = appointmentRepo  // prevent unused variable error
+
+	// Wait for termination signal
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	<-sigCh
+
+	log.Info().Msg("Shutting down Clara...")
 }
