@@ -1,6 +1,8 @@
 package whatsapp
 
 import (
+	"context"
+
 	"go.mau.fi/whatsmeow/types/events"
 )
 
@@ -45,8 +47,36 @@ func (c *Client) handleMessage(evt *events.Message) {
 		Str("text", text).
 		Msg("received message")
 
-	// Echo handler: reply with "Clara: Testing"
-	reply := "Clara: Testing"
+	// Process with NLP
+	ctx := context.Background()
+	nlpResult, err := c.nlpService.Process(ctx, text)
+	if err != nil {
+		c.logger.Error().
+			Err(err).
+			Str("text", text).
+			Msg("nlp processing failed")
+	} else {
+		// Log NLP results
+		c.logger.Info().
+			Str("intent", string(nlpResult.Intent.Intent)).
+			Float64("confidence", nlpResult.Intent.Confidence).
+			Int("entities", len(nlpResult.Entities)).
+			Bool("low_confidence", nlpResult.LowConfidence).
+			Msg("nlp processing complete")
+
+		// Log each entity
+		for i, entity := range nlpResult.Entities {
+			c.logger.Info().
+				Int("index", i).
+				Str("type", string(entity.Type)).
+				Str("value", entity.Value).
+				Float64("confidence", entity.Confidence).
+				Msg("extracted entity")
+		}
+	}
+
+	// Echo back the message
+	reply := "Echo: " + text
 
 	if err := c.SendText(evt.Info.Sender, reply); err != nil {
 		c.logger.Error().
