@@ -3,7 +3,6 @@ module github.com/matheusmassa1/clara
 go 1.25.4
 
 require (
-	github.com/hupe1980/go-huggingface v0.0.15
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/rs/zerolog v1.34.0
@@ -28,7 +27,6 @@ require (
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/petermattis/goid v0.0.0-20250904145737-900bdf8bb490 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.27 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
