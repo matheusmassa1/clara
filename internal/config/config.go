@@ -13,6 +13,7 @@ type Config struct {
 	MongoURI            string
 	DBName              string
 	LogLevel            string
+	HFBaseURL           string
 	HFAPIKey            string
 	HFIntentModel       string
 	HFNERModel          string
@@ -34,6 +35,7 @@ func Load() (*Config, error) {
 		MongoURI:            getEnv("MONGO_URI", ""),
 		DBName:              getEnv("DB_NAME", "clara"),
 		LogLevel:            getEnv("LOG_LEVEL", "info"),
+		HFBaseURL:           getEnv("HF_BASE_URL", "https://api-inference.huggingface.co"),
 		HFAPIKey:            getEnv("HF_API_KEY", ""),
 		HFIntentModel:       getEnv("HF_INTENT_MODEL", "neuralmind/bert-base-portuguese-cased"),
 		HFNERModel:          getEnv("HF_NER_MODEL", "pierreguillou/ner-bert-base-cased-pt-lenerbr"),

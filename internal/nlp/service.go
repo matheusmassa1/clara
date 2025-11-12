@@ -28,8 +28,8 @@ type service struct {
 }
 
 // NewService creates a new NLP service with the given configuration.
-func NewService(apiKey, intentModel, nerModel string) (Service, error) {
-	client, err := NewHFClient(apiKey, intentModel, nerModel)
+func NewService(baseURL, apiKey, intentModel, nerModel string) (Service, error) {
+	client, err := NewHFClient(baseURL, apiKey, intentModel, nerModel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HF client: %w", err)
 	}
