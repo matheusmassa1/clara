@@ -17,19 +17,21 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/matheusmassa1/clara/internal/config"
+	"github.com/matheusmassa1/clara/internal/nlp"
 )
 
 // Client wraps whatsmeow client with app-specific logic.
 type Client struct {
-	client *whatsmeow.Client
-	cfg    *config.Config
-	logger zerolog.Logger
-	store  *sqlstore.Container
+	client     *whatsmeow.Client
+	cfg        *config.Config
+	logger     zerolog.Logger
+	store      *sqlstore.Container
+	nlpService nlp.Service
 }
 
 // New creates WhatsApp client instance.
 // Initializes SQLite store for session persistence.
-func New(cfg *config.Config, logger zerolog.Logger) (*Client, error) {
+func New(cfg *config.Config, logger zerolog.Logger, nlpService nlp.Service) (*Client, error) {
 	// Setup store
 	dbLog := waLog.Stdout("Database", "ERROR", true)
 	ctx := context.Background()
@@ -39,9 +41,10 @@ func New(cfg *config.Config, logger zerolog.Logger) (*Client, error) {
 	}
 
 	return &Client{
-		cfg:    cfg,
-		logger: logger,
-		store:  store,
+		cfg:        cfg,
+		logger:     logger,
+		store:      store,
+		nlpService: nlpService,
 	}, nil
 }
 

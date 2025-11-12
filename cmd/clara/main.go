@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3" // SQLite driver for whatsmeow session storage
 
 	"github.com/matheusmassa1/clara/internal/config"
+	"github.com/matheusmassa1/clara/internal/nlp"
 	"github.com/matheusmassa1/clara/internal/repository/mongo"
 	"github.com/matheusmassa1/clara/internal/whatsapp"
 	"github.com/rs/zerolog"
@@ -37,6 +38,7 @@ func main() {
 
 	log.Info().
 		Str("db_name", cfg.DBName).
+		Str("hf_base_url", cfg.HFBaseURL).
 		Str("intent_model", cfg.HFIntentModel).
 		Str("ner_model", cfg.HFNERModel).
 		Str("session_dir", cfg.SessionDir).
@@ -65,8 +67,17 @@ func main() {
 	_ = patientRepo      // prevent unused variable error (future phases)
 	_ = appointmentRepo  // prevent unused variable error (future phases)
 
-	// Initialize WhatsApp client
-	waClient, err := whatsapp.New(cfg, log.Logger)
+	// Initialize NLP service
+	nlpSvc, err := nlp.NewService(cfg.HFBaseURL, cfg.HFAPIKey, cfg.HFIntentModel, cfg.HFNERModel)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to create NLP service")
+	}
+	log.Info().
+		Str("base_url", cfg.HFBaseURL).
+		Msg("NLP service initialized")
+
+	// Initialize WhatsApp client w/ NLP
+	waClient, err := whatsapp.New(cfg, log.Logger, nlpSvc)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to create WhatsApp client")
 	}
