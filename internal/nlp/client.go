@@ -176,7 +176,7 @@ func (c *HFClient) doRequest(ctx context.Context, model string, reqBody interfac
 	}
 
 	// Build URL
-	url := fmt.Sprintf("%s/models/%s", c.baseURL, model)
+	url := fmt.Sprintf("%s/hf-inference/models/%s", c.baseURL, model)
 
 	// Create request
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
