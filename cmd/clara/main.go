@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3" // SQLite driver for whatsmeow session storage
 
 	"github.com/matheusmassa1/clara/internal/config"
+	"github.com/matheusmassa1/clara/internal/nlp"
 	"github.com/matheusmassa1/clara/internal/repository/mongo"
 	"github.com/matheusmassa1/clara/internal/whatsapp"
 	"github.com/rs/zerolog"
@@ -64,6 +65,43 @@ func main() {
 	appointmentRepo := mongo.NewAppointmentRepository(db)
 	_ = patientRepo      // prevent unused variable error (future phases)
 	_ = appointmentRepo  // prevent unused variable error (future phases)
+
+	// Initialize NLP service
+	nlpSvc, err := nlp.NewService(cfg.HFAPIKey, cfg.HFIntentModel, cfg.HFNERModel)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to create NLP service")
+	}
+
+	// Test NLP service with PT-BR sample
+	log.Info().Msg("Testing NLP service with sample input")
+	sampleText := "Quero marcar uma consulta amanhã às 14h"
+	nlpResult, err := nlpSvc.Process(ctx, sampleText)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("sample", sampleText).
+			Msg("NLP test failed")
+	} else {
+		log.Info().
+			Str("sample", sampleText).
+			Str("intent", string(nlpResult.Intent.Intent)).
+			Float64("confidence", nlpResult.Intent.Confidence).
+			Int("entities", len(nlpResult.Entities)).
+			Bool("low_confidence", nlpResult.LowConfidence).
+			Msg("NLP test successful")
+
+		// Log entities if any
+		for i, entity := range nlpResult.Entities {
+			log.Info().
+				Int("index", i).
+				Str("type", string(entity.Type)).
+				Str("value", entity.Value).
+				Float64("confidence", entity.Confidence).
+				Msg("Extracted entity")
+		}
+	}
+
+	_ = nlpSvc  // prevent unused variable error (future phases)
 
 	// Initialize WhatsApp client
 	waClient, err := whatsapp.New(cfg, log.Logger)
