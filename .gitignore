@@ -1,0 +1,40 @@
+# Binaries
+/clara
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of go build
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# WhatsApp session data
+whatsapp_session/
+*.session
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
